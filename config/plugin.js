@@ -6,6 +6,9 @@ module.exports = {
   // static: {
   //   enable: true,
   // }
+  security: {
+    enable: false,
+  },
   mongoose: {
     enable: true,
     package: 'egg-mongoose',
