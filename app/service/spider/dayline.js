@@ -101,48 +101,6 @@ class DaylineService extends Service {
       message: 'success',
     };
   }
-  // /**
-  // * @name daylineUpdate
-  // * @description 执行日线数据初始化
-  // * @return {SuccessCallback} 数据库执行结果
-  // */
-  // async daylineUpdate() {
-  //   // 获取所有有日线,但复权日期不是最新的股票数据
-  //   // 最近的交易日，今天星期几，如果是周六日，则改为本周周末
-  //   const latestTradingDay = moment().format('E') < 6 ?
-  //     moment().startOf('day').toDate() :
-  //     moment().weekday(-moment().format('E') % 5).startOf('day')
-  //       .toDate();
-  //   const stocks = await this.ctx.service.stock.aggregate([{
-  //     $project: {
-  //       code: '$code',
-  //       dayline: { $slice: [ '$dayline', 1 ] },
-  //     },
-  //   }, {
-  //     $match: {
-  //       'dayline.date': { $lt: latestTradingDay },
-  //     },
-  //   }]);
-  //   // 循环执行每个股票的日线初始化
-  //   for (let i = 0; i < stocks.length; i++) {
-  //     const stock = stocks[i];
-  //     // 判断此股票的日线数据是否是最新数据,如果不是的话，则获取最新数据并更新
-  //     const daylineInitStatus = await this.daylineOfOneStockUpdate(stock);
-  //     console.log(daylineInitStatus);
-  //     console.log(`完成获取${stock.code}日线数据，总完成${i + 1}个，共${stocks.length}个`);
-  //   }
-  //   console.log('完成日线数据更新');
-  //   return {
-  //     code: 0,
-  //     message: 'success',
-  //   };
-  // }
-  // /**
-  // * @name daylineOfOneStockInit
-  // * @description 执行单个股票的日线数据初始化
-  // * @param {Object} stock 股票
-  // * @return {SuccessCallback} 数据库执行结果
-  // */
   async daylineOfOneStockInit({ code }) {
     const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code dayline' });
     const start = stock.dayline.length ? moment(stock.dayline[0].date).add(1, 'day').format('YYYYMMDD') : undefined;
@@ -155,24 +113,6 @@ class DaylineService extends Service {
     // // 将单个股票的所有历史日线数据批量插入数据库
     return await this.updateDayline(stock, dayline);
   }
-  // /**
-  // * @name daylineOfOneStockUpdate
-  // * @description 执行单个股票的日线数据更新
-  // * @param {Object} stock 股票
-  // * @return {SuccessCallback} 数据库执行结果
-  // */
-  // async daylineOfOneStockUpdate(stock) {
-  //   // 抓取单个股票的历史日线数据
-  //   console.log(stock);
-  //   const start = moment(stock.dayline[0].date).add(1, 'day').format('YYYYMMDD');
-  //   const data = await Promise.all([
-  //     this.getDataOfOneStock(stock, 'daily', start),
-  //     this.getDataOfOneStock(stock, 'adj_factor', start),
-  //   ]);
-  //   const dayline = daylineFormatter(data);
-  //   // 将单个股票的所有历史日线数据批量插入数据库
-  //   return await this.updateDayline(stock, dayline);
-  // }
   /**
   * @name getDataOfOneStockRecursive
   * @description 递归抓取单个股票的数据

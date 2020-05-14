@@ -10,7 +10,7 @@ module.exports = app => {
   // 启动爬虫程序
   router.post('/spider/dayline', controller.spider.dayline);
   // 指标信息计算程序
-  // router.post('/ta/start', controller.ta.start);
+  router.post('/tech/start', controller.tech.start);
   // // 信号数据收集程序
   // router.post('/sign/start', controller.sign.start);
   // // 样本数据收集程序
