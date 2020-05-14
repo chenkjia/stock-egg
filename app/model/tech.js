@@ -2,6 +2,13 @@
 module.exports = {
   // 日期
   date: Date,
+  // 顶底判断
+  base: {
+    isVertex: Boolean,
+    isNadir: Boolean,
+    isVirtualVertex: Boolean,
+    isVirtualNadir: Boolean,
+  },
   // 均线系统
   ma: {
     ma5: Number,

@@ -1,6 +1,6 @@
 'use strict';
 const Service = require('egg').Service;
-// const { MA } = require('./math');
+const { KDJ } = require('./math');
 const { macd } = require('ta-math');
 const { slice, round, sum, zipWith } = require('lodash');
 
@@ -34,7 +34,38 @@ const maFormatter = dayline => {
     };
   });
 };
+const baseFormat = baseArray => {
+  return baseArray.map((item, index) => {
+    if (index > 1 && index < baseArray.length - 1) {
+      const i_0 = baseArray[index - 2];
+      const i_1 = baseArray[index - 1];
+      const i_2 = item;
+      const i_3 = baseArray[index + 1];
+      const i_4 = baseArray[index + 2];
+      return {
+        isVertex: i_4[0] && i_1[0] > i_0[0] && i_2[0] > i_1[0] && i_2[0] > i_3[0] && i_3[0] > i_4[0],
+        isNadir: i_4[1] && i_1[1] < i_0[1] && i_2[1] < i_1[1] && i_2[1] < i_3[1] && i_3[1] < i_4[1],
+        isVirtualVertex: i_1[0] > i_0[0] && i_2[0] > i_1[0] && i_2[0] > i_3[0],
+        isVirtualNadir: i_1[1] < i_0[1] && i_2[1] < i_1[1] && i_2[1] < i_3[1],
+      };
+    }
+    return {
+      isVertex: false,
+      isNadir: false,
+      isVirtualVertex: false,
+      isVirtualNadir: false,
+    };
 
+  });
+};
+const kdjFormat = kdjArray => {
+  const { k, d, j } = KDJ(kdjArray);
+  return zipWith(k, d, j, (k, d, j) => ({
+    k: round(k, 3),
+    d: round(d, 3),
+    j: round(j, 3),
+  }));
+};
 const macdFormat = closeArray => {
   const { line, signal, hist } = macd(closeArray);
   return zipWith(line, signal, hist, (diff, dea, bar) => ({
@@ -46,12 +77,17 @@ const macdFormat = closeArray => {
 const techFormat = dayline => {
   const techDayline = dayline.reverse();
   const closeArray = techDayline.map(({ orgin }) => orgin.close);
-  const ma = maFormatter(closeArray);
+  const kdjArray = techDayline.map(({ orgin }) => ([ orgin.high, orgin.low, orgin.close ]));
+  const baseData = baseFormat(kdjArray);
+  const maData = maFormatter(closeArray);
   const macdData = macdFormat(closeArray);
-  const tech = zipWith(techDayline, ma, macdData, ({ date }, ma, macd) => ({
+  const kdjData = kdjFormat(kdjArray);
+  const tech = zipWith(techDayline, baseData, maData, macdData, kdjData, ({ date }, base, ma, macd, kdj) => ({
     date,
+    base,
     ma,
     macd,
+    kdj,
   }));
   return tech.reverse();
 };
@@ -74,7 +110,8 @@ class TechService extends Service {
   */
   async techInit() {
     // 获取所有股票代码
-    const stocks = await this.ctx.service.stock.index({ select: 'code' });
+    const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000001' }, select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];
