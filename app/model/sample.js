@@ -4,6 +4,10 @@ module.exports = app => {
   const SampleSchema = new Schema({
     // 股票唯一码
     code: String,
+    // 信号日期
+    sign_date: Date,
+    // 止损价格
+    stopLoss: Number,
     // 买点价格
     buy_price: Number,
     // 买点日期

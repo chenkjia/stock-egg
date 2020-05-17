@@ -11,10 +11,14 @@ module.exports = app => {
   router.post('/spider/dayline', controller.spider.dayline);
   // 指标信息计算程序
   router.post('/tech/start', controller.tech.start);
-  // // 信号数据收集程序
-  // router.post('/sign/start', controller.sign.start);
+  // 指标标识计算程序
+  router.post('/tech/data', controller.tech.data);
+  // 指标标识计算程序
+  router.post('/tech/mark', controller.tech.mark);
+  // 信号数据收集程序
+  router.post('/tech/sign', controller.tech.sign);
   // // 样本数据收集程序
-  // router.post('/sample/start', controller.sample.start);
+  router.post('/sample/start', controller.sample.start);
   // // 样本数据的增删改查程序
   // router.resources('sample', '/sample', controller.sample);
   // // 策略回测程序

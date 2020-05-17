@@ -12,7 +12,7 @@ class StockService extends CustomService {
   }
   async checkAndUpdate(item) {
     // 通过唯一码查找股票
-    const stock = await this.show({ filter: { code: item.code } });
+    const stock = await this.show({ filter: { code: item.code }, select: '-tech -dayline' });
     let result;
     if (stock && stock.code) {
       // 如果股票存在，就修改其信息
@@ -37,6 +37,14 @@ class StockService extends CustomService {
     // 通过唯一码查找股票
     return await this.model.updateOne({ _id: stock._id }, {
       tech,
+    }, {
+      upsert: true, // 查不到，则添加新数据
+    });
+  }
+  async checkAndUpdateSign(stock, sign) {
+    // 通过唯一码查找股票
+    return await this.model.updateOne({ _id: stock._id }, {
+      sign,
     }, {
       upsert: true, // 查不到，则添加新数据
     });

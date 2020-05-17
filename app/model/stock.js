@@ -46,10 +46,13 @@ module.exports = app => {
     dayline: [ dayline ],
     // 技术指标
     tech: [ tech ],
+    // 信号
+    sign: Array,
   });
   StockSchema.index({ code: 1 });
   StockSchema.index({ symbol: 1 });
   StockSchema.index({ code: 1, 'dayline.date': 1 });
   StockSchema.index({ code: 1, 'tech.date': 1 });
+  StockSchema.index({ code: 1, 'sign.date': 1 });
   return model('Stock', StockSchema, 'stock');
 };

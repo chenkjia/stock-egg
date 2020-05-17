@@ -11,6 +11,18 @@ class TechController extends Controller {
     const { ctx, service } = this;
     ctx.body = await service.tech.start();
   }
+  async data() {
+    const { ctx, service } = this;
+    ctx.body = await service.techData.init();
+  }
+  async mark() {
+    const { ctx, service } = this;
+    ctx.body = await service.techMark.init();
+  }
+  async sign() {
+    const { ctx, service } = this;
+    ctx.body = await service.techSign.init();
+  }
 }
 
 module.exports = TechController;

@@ -37,21 +37,5 @@ module.exports = {
     j: Number,
   },
   // 标识
-  mark: [{
-    // 标识名称
-    name: String,
-    // 标识来自哪个系统
-    system: String,
-  }],
-  // 信号
-  sign: [{
-    // 信号名称
-    name: String,
-    // 买入或卖出信号
-    type: String,
-    // 来自哪个系统
-    system: String,
-    // 信号强度
-    intensity: Number,
-  }],
+  mark: Array,
 };

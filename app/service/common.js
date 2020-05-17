@@ -11,7 +11,7 @@ class CommomService extends Service {
     return await this.model.find(filter, select);
   }
   async show({ filter = {}, select = null }) {
-    return await this.model.findOne(filter, select);
+    return await this.model.findOne(filter, select, { lean: true });
   }
   async create(body) {
     const result = new this.model(body);
