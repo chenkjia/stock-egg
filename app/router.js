@@ -21,6 +21,8 @@ module.exports = app => {
   router.post('/sample/start', controller.sample.start);
   // // 样本数据的增删改查程序
   // router.resources('sample', '/sample', controller.sample);
+  // 选择上升趋势的股票
+  router.post('/selectStock/start', controller.selectStock.start);
   // // 策略回测程序
   // router.post('/backtest/start', controller.backtest.start);
 };

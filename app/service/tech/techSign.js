@@ -1,24 +1,39 @@
 'use strict';
 const Service = require('egg').Service;
-const { slice, findLast } = require('lodash');
-
-
-const signFormat = tech => {
-  return tech.reverse().filter((current, index) => {
-    if (current.mark.includes('KDJGoldenCross')) {
-      const list = slice(tech, index - 20, index - 1);
-      const last = findLast(list, ({ mark }) => mark.includes('KDJGoldenCross'));
-      if (last && last.mark && last.mark.includes('KDJLowGoldenCross') && current.kdj.d < 25) {
-        return true;
+// const { slice, findLast } = require('lodash');
+const signFormat = (dayline, tech) => {
+  return tech.reduce((result, current, index) => {
+    if (result.stage === 'low') {
+      if (current.mark.includes('KDJGoldenCross') && current.kdj.k < 25 && dayline[index].orgin.low > current.ma.ma20) {
+        return {
+          ...result,
+          sign: [ ...result.sign, {
+            date: current.date,
+            type: 'BUY',
+            name: 'KDJSecondGoldenCross',
+            system: 'KDJ',
+          }],
+        };
       }
+      if (current.kdj.k > 30) {
+        return {
+          ...result,
+          stage: '',
+        };
+      }
+      return result;
     }
-    return false;
-  }).map(({ date }) => ({
-    date,
-    type: 'BUY',
-    name: 'KDJSecondGoldenCross',
-    system: 'KDJ',
-  }));
+    if (current.mark.includes('KDJLowGoldenCross')) {
+      return {
+        ...result,
+        stage: 'low',
+      };
+    }
+    return result;
+  }, {
+    stage: '',
+    sign: [],
+  });
 };
 
 class TechSignService extends Service {
@@ -29,8 +44,8 @@ class TechSignService extends Service {
   */
   async init() {
     // 获取所有股票代码
-    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000158' }, select: 'code' });
-    const stocks = await this.ctx.service.stock.index({ select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000004' }, select: 'code' });
+    const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];
@@ -50,8 +65,8 @@ class TechSignService extends Service {
   * @return {SuccessCallback} 数据库执行结果
   */
   async TechSignInitOfOneStock({ code }) {
-    const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code tech' });
-    const sign = signFormat(stock.tech);
+    const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code dayline tech' });
+    const { sign } = signFormat(stock.dayline.reverse(), stock.tech.reverse());
     return await this.ctx.service.stock.checkAndUpdateSign(stock, sign);
   }
 }

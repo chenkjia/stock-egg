@@ -33,6 +33,13 @@ const sampleFormat = ({ sign, tech, dayline, code }) => {
       isSuccess,
       days;
     for (let i = index + 2; i <= index + 11; i++) {
+      if (!dayline[i]) {
+        return {
+          code,
+          sign_date: sign.date,
+          type: 'GIVEUP',
+        };
+      }
       // 如果低位小于或等于止损价，则以其为卖出价，该交易失败
       if (dayline[i].orgin.low <= stopLoss) {
         sell_price = stopLoss;
@@ -86,8 +93,8 @@ class SampleService extends CustomService {
   */
   async start() {
     // 获取所有股票代码
-    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000158' }, select: 'code' });
-    const stocks = await this.ctx.service.stock.index({ filter: { $where: 'this.dayline.length > 0' }, select: 'code' });
+    const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ filter: { $where: 'this.dayline.length > 0' }, select: 'code' });
     // 循环执行每个股票的样本收集
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];

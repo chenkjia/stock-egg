@@ -86,7 +86,7 @@ class DaylineService extends Service {
   */
   async daylineInit() {
     // 获取所有没有日线的股票数据
-    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000004' }, select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '002988' }, select: 'code' });
     const stocks = await this.ctx.service.stock.index({ select: 'code' });
     // 循环执行每个股票的日线初始化
     for (let i = 0; i < stocks.length; i++) {
@@ -108,7 +108,7 @@ class DaylineService extends Service {
       this.getDataOfOneStockRecursive(stock, 'daily', start),
       this.getDataOfOneStockRecursive(stock, 'adj_factor', start),
     ]);
-    const adj_factor = stock.dayline.length ? stock.dayline[stock.dayline.length - 1].adj_factor : data[1].items[data[1].items.length - 1][2];
+    const adj_factor = stock.dayline.length ? stock.dayline[stock.dayline.length - 1].adj_factor : data[1].items.length ? data[1].items[data[1].items.length - 1][2] : 1;
     const dayline = daylineFormatter(data, adj_factor);
     // // 将单个股票的所有历史日线数据批量插入数据库
     return await this.updateDayline(stock, dayline);
