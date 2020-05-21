@@ -2,7 +2,7 @@
 const Service = require('egg').Service;
 // const { slice, findLast } = require('lodash');
 const signFormat = (dayline, tech) => {
-  return tech.reduce((result, current, index) => {
+  return tech.reduce((result, current) => {
     if (result.stage === 'low') {
       if (current.mark.includes('KDJGoldenCross')) {
         return {

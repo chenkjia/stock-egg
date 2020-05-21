@@ -33,6 +33,14 @@ class StockService extends CustomService {
       upsert: true, // 查不到，则添加新数据
     });
   }
+  async checkAndUpdateStage(stock, stage) {
+    // 通过唯一码查找股票
+    return await this.model.updateOne({ _id: stock._id }, {
+      stage,
+    }, {
+      upsert: true, // 查不到，则添加新数据
+    });
+  }
   async checkAndUpdateTech(stock, tech) {
     // 通过唯一码查找股票
     return await this.model.updateOne({ _id: stock._id }, {

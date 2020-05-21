@@ -1,6 +1,7 @@
 'use strict';
 const dayline = require('./dayline');
 const tech = require('./tech');
+// const stage = require('./stage');
 module.exports = app => {
   const { Schema, model } = app.mongoose;
   const StockSchema = new Schema({
@@ -46,6 +47,8 @@ module.exports = app => {
     dayline: [ dayline ],
     // 技术指标
     tech: [ tech ],
+    // 趋势
+    stage: Array,
     // 信号
     sign: Array,
   });
