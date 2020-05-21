@@ -42,6 +42,7 @@ const stageFormat = (dayline, scale = 'large') => {
     };
     const start_index = findIndex(dayline, [ 'date', point.date ]);
     const end_index = findIndex(dayline, [ 'date', nextPoint.date ]);
+    if (start_index === end_index) return null;
     return {
       scale,
       type: point.type === 'vertex' ? 'fail' : 'rise',
@@ -55,7 +56,7 @@ const stageFormat = (dayline, scale = 'large') => {
       days: end_index - start_index,
       children: scale === 'large' ? stageFormat(slice(dayline, start_index, end_index), 'middle') : [],
     };
-  });
+  }).filter(item => item);
 };
 
 class TechStageService extends Service {
@@ -89,22 +90,22 @@ class TechStageService extends Service {
   async TechStageInitOfOneStock({ code }) {
     const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code dayline' });
     const dayline = stock.dayline.reverse();
-    // const stages = stageFormat(slice(dayline, 0, 1055));
+    // const index = findIndex(dayline, [ 'date', new Date(2020, 1, 19) ]);
+    // const stages = stageFormat(slice(dayline, 0, index));
     for (let i = 0; i < dayline.length; i++) {
       const day = dayline[i];
       const stages = stageFormat(slice(dayline, 0, i));
       const lastStage = stages[stages.length - 1];
       if (lastStage && lastStage.type === 'rise' && lastStage.children.length === 3) {
         const lastFailStage = stages[stages.length - 2];
-        if (lastFailStage && lastFailStage.children[lastFailStage.children.length - 2].start_price < lastStage.children[0].end_price) {
+        if (lastFailStage && lastFailStage.children[lastFailStage.children.length - 2] && lastFailStage.children[lastFailStage.children.length - 2].start_price < lastStage.children[0].end_price) {
           console.log(day.date);
         }
       }
       console.log(`完成第${i}天测试`);
     }
-    // const stage = stageFormat(stock.dayline);
-    // console.log(stages);
     return [];
+    // console.log(stages);
     // return stages;
     // return await this.ctx.service.stock.checkAndUpdateTech(stock, tech);
   }
