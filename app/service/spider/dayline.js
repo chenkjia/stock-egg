@@ -3,7 +3,7 @@
 // const moment = require('moment');
 const Service = require('egg').Service;
 const moment = require('moment');
-const { pick, zipObject, keyBy, difference, mapValues } = require('lodash');
+const { pick, zipObject, keyBy, difference, mapValues, round } = require('lodash');
 
 const daylineFormatter = (data, first_factor) => {
   const adj = keyBy(data[1].items, 1);
@@ -21,7 +21,7 @@ const daylineFormatter = (data, first_factor) => {
       percent: obj.pct_chg,
       adj_factor,
       orgin,
-      adj: mapValues(orgin, val => val * factor),
+      adj: mapValues(orgin, val => round(val * factor, 3)),
       date: moment(obj.trade_date, 'YYYYMMDD').toDate(),
     };
   });

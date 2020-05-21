@@ -4,7 +4,7 @@ const Service = require('egg').Service;
 const signFormat = (dayline, tech) => {
   return tech.reduce((result, current, index) => {
     if (result.stage === 'low') {
-      if (current.mark.includes('KDJGoldenCross') && current.kdj.k < 25 && dayline[index].orgin.low > current.ma.ma20) {
+      if (current.mark.includes('KDJGoldenCross')) {
         return {
           ...result,
           sign: [ ...result.sign, {
@@ -15,7 +15,7 @@ const signFormat = (dayline, tech) => {
           }],
         };
       }
-      if (current.kdj.k > 30) {
+      if (current.kdj.k > 20) {
         return {
           ...result,
           stage: '',
@@ -45,7 +45,7 @@ class TechSignService extends Service {
   async init() {
     // 获取所有股票代码
     // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000004' }, select: 'code' });
-    const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
+    const stocks = await this.ctx.service.stock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];

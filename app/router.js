@@ -15,6 +15,8 @@ module.exports = app => {
   router.post('/tech/data', controller.tech.data);
   // 指标标识计算程序
   router.post('/tech/mark', controller.tech.mark);
+  // 趋势计算程序
+  router.post('/tech/stage', controller.tech.stage);
   // 信号数据收集程序
   router.post('/tech/sign', controller.tech.sign);
   // // 样本数据收集程序
