@@ -106,5 +106,62 @@ class TechStageService extends Service {
     // return stages;
     return await this.ctx.service.stock.checkAndUpdateStage(stock, stages);
   }
+  /**
+  * @name sign
+  * @description 技术指标初始化
+  * @return {SuccessCallback} 数据库执行结果
+  */
+  async sign() {
+    // 获取所有股票代码
+    const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000616' }, select: 'code' });
+    // const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
+    // 循环执行每个股票的技术指标初始化
+    for (let i = 0; i < stocks.length; i++) {
+      const stock = stocks[i];
+      await this.TechStageSignInitOfOneStock(stock);
+      console.log(`完成获取${stock.code}技术指标标识初始化，总完成${i + 1}个，共${stocks.length}个`);
+    }
+    console.log('完成技术指标初始化');
+    return {
+      code: 0,
+      message: 'success',
+    };
+  }
+  /**
+  * @name TechStageSignInitOfOneStock
+  * @description 单个股票技术指标初始化
+  * @param {Object} stock 股票
+  * @return {SuccessCallback} 数据库执行结果
+  */
+  async TechStageSignInitOfOneStock({ code }) {
+    const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code dayline' });
+    const dayline = stock.dayline.reverse();
+    const sign = dayline.reduce((result, item, i) => {
+      const stages = stageFormat(slice(dayline, 0, i));
+      const lastStage = stages[stages.length - 1];
+      if (lastStage && lastStage.type === 'rise' && lastStage.children.length === 3) {
+        const lastFailStage = stages[stages.length - 2];
+        if (lastFailStage && lastFailStage.children[lastFailStage.children.length - 2] && lastFailStage.children[lastFailStage.children.length - 2].start_price < lastStage.children[0].end_price) {
+          return [ ...result, item ];
+        }
+      }
+      console.log(`${stock.code}第${i}天测试`);
+      return result;
+    }, []);
+    // for (let i = 0; i < dayline.length; i++) {
+    //   const day = dayline[i];
+    //   const stages = stageFormat(slice(dayline, 0, i));
+    //   const lastStage = stages[stages.length - 1];
+    //   if (lastStage && lastStage.type === 'rise' && lastStage.children.length === 3) {
+    //     const lastFailStage = stages[stages.length - 2];
+    //     if (lastFailStage && lastFailStage.children[lastFailStage.children.length - 2] && lastFailStage.children[lastFailStage.children.length - 2].start_price < lastStage.children[0].end_price) {
+    //       console.log(day.date);
+    //     }
+    //   }
+    //   console.log(`完成第${i}天测试`);
+    // }
+    // return stages;
+    return await this.ctx.service.stock.checkAndUpdateSign(stock, sign);
+  }
 }
 module.exports = TechStageService;
