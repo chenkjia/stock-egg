@@ -81,9 +81,9 @@ const isStageSign = stages => {
   // 定义当上上个中趋势
   const lastMiddleStage = currentStage.children[currentStage.children.length - 3];
   // 当前趋势的结束价格大于上上个子趋势的结束价格
-  if (currentMiddleStage.end_price < lastMiddleStage.end_price) {
-    return false;
-  }
+  // if (currentMiddleStage.end_price < lastMiddleStage.end_price) {
+  //   return false;
+  // }
   // 当前趋势的开始价格大于上上个子趋势的开始价格
   if (currentMiddleStage.start_price < lastMiddleStage.start_price) {
     return false;
@@ -153,7 +153,8 @@ class TechStageService extends Service {
   async sign() {
     // 获取所有股票代码
     // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000158' }, select: 'code' });
-    const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
+    // const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
+    const stocks = await this.ctx.service.stock.index({ select: 'code', query: { limit: 100 } });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];

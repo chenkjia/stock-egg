@@ -7,11 +7,11 @@ class CommomService extends Service {
     super(x);
     this.model = this.ctx.model.Stock;
   }
-  async index({ filter = {}, select = null }) {
-    return await this.model.find(filter, select);
+  async index({ filter = {}, select = null, query = {} }) {
+    return await this.model.find(filter, select, query);
   }
-  async show({ filter = {}, select = null }) {
-    return await this.model.findOne(filter, select, { lean: true });
+  async show({ filter = {}, select = null, query = { lean: true } }) {
+    return await this.model.findOne(filter, select, query);
   }
   async create(body) {
     const result = new this.model(body);
