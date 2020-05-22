@@ -45,7 +45,7 @@ class SelectStockService extends CustomService {
     // 定义当前大趋势与上一个大趋势,与当前中趋势
     const currentStage = stages[stages.length - 1];
     // 当前趋势的子趋势为3个
-    if (currentStage.children.length !== 3) {
+    if (currentStage.children.length < 3) {
       return false;
     }
     // 定义当前中趋势

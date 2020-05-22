@@ -5,14 +5,17 @@ const { slice, maxBy, minBy, findIndex } = require('lodash');
 // 找出拐点
 const pointFormat = (dayline, day) => {
   const tmp = dayline.reduce((result, item, index) => {
+    if (index === dayline.length - 1) {
+      return result;
+    }
     const part = slice(dayline, index >= day ? index - day : 0, index + day > dayline.length ? dayline.length : index + day);
-    const max = maxBy(part, ({ adj }) => adj.high);
-    const min = minBy(part, ({ adj }) => adj.low);
+    const max = maxBy(part, 'orgin.high');
+    const min = minBy(part, 'orgin.low');
     if (max.date === item.date) {
-      return [ ...result, { type: 'vertex', date: item.date, price: item.adj.high }];
+      return [ ...result, { type: 'vertex', date: item.date, price: item.orgin.high }];
     }
     if (min.date === item.date) {
-      return [ ...result, { type: 'nadir', date: item.date, price: item.adj.low }];
+      return [ ...result, { type: 'nadir', date: item.date, price: item.orgin.low }];
     }
     return result;
   }, []);
@@ -30,7 +33,7 @@ const pointFormat = (dayline, day) => {
 };
 const scaleDay = {
   large: 120,
-  middle: 30,
+  middle: 20,
   small: 5,
 };
 const stageFormat = (dayline, scale = 'large') => {
@@ -38,11 +41,11 @@ const stageFormat = (dayline, scale = 'large') => {
   return points.map((point, index) => {
     const nextPoint = points[index + 1] ? points[index + 1] : {
       date: dayline[dayline.length - 1].date,
-      price: dayline[dayline.length - 1].adj.close,
+      price: point.type === 'vertex' ? dayline[dayline.length - 1].orgin.low : dayline[dayline.length - 1].orgin.high,
     };
     const start_index = findIndex(dayline, [ 'date', point.date ]);
     const end_index = findIndex(dayline, [ 'date', nextPoint.date ]);
-    if (start_index === end_index) return null;
+    // if (start_index === end_index) return null;
     return {
       scale,
       type: point.type === 'vertex' ? 'fail' : 'rise',
@@ -54,7 +57,7 @@ const stageFormat = (dayline, scale = 'large') => {
       end_index,
       multiple: nextPoint.price / point.price,
       days: end_index - start_index,
-      children: index >= points.length - 3 && scale === 'large' ? stageFormat(slice(dayline, start_index, end_index), 'middle') : [],
+      children: index >= points.length - 3 && scale === 'large' ? stageFormat(slice(dayline, start_index, end_index + 1), 'middle') : [],
     };
   }).filter(item => item);
 };
@@ -66,7 +69,7 @@ const isStageSign = stages => {
   // 定义当前大趋势与上一个大趋势,与当前中趋势
   const currentStage = stages[stages.length - 1];
   // 当前趋势的子趋势为3个
-  if (currentStage.children.length !== 3) {
+  if (currentStage.children.length < 3) {
     return false;
   }
   // 定义当前中趋势
@@ -149,8 +152,8 @@ class TechStageService extends Service {
   */
   async sign() {
     // 获取所有股票代码
-    const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000616' }, select: 'code' });
-    // const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000158' }, select: 'code' });
+    const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];
@@ -173,25 +176,17 @@ class TechStageService extends Service {
     const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code dayline' });
     const dayline = stock.dayline.reverse();
     const sign = dayline.reduce((result, item, i) => {
-      const stages = stageFormat(slice(dayline, 0, i));
+      const stages = stageFormat(slice(dayline, 0, i + 1));
       if (isStageSign(stages)) {
         return [ ...result, item ];
       }
-      console.log(`${stock.code}第${i}天测试`);
+      console.log(`${stock.code}第${i}天测试,总共${dayline.length}天`);
       return result;
     }, []);
-    // for (let i = 0; i < dayline.length; i++) {
-    //   const day = dayline[i];
-    //   const stages = stageFormat(slice(dayline, 0, i));
-    //   const lastStage = stages[stages.length - 1];
-    //   if (lastStage && lastStage.type === 'rise' && lastStage.children.length === 3) {
-    //     const lastFailStage = stages[stages.length - 2];
-    //     if (lastFailStage && lastFailStage.children[lastFailStage.children.length - 2] && lastFailStage.children[lastFailStage.children.length - 2].start_price < lastStage.children[0].end_price) {
-    //       console.log(day.date);
-    //     }
-    //   }
-    //   console.log(`完成第${i}天测试`);
-    // }
+    // const index = findIndex(dayline, [ 'date', new Date(2020, 1, 17) ]);
+    // const stages = stageFormat(slice(dayline, 0, index + 1));
+    // console.log(isStageSign(stages));
+    // console.log(dayline[index]);
     // return stages;
     return await this.ctx.service.stock.checkAndUpdateSign(stock, sign);
   }
