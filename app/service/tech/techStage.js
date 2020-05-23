@@ -57,7 +57,7 @@ const stageFormat = (dayline, scale = 'large') => {
       end_index,
       multiple: nextPoint.price / point.price,
       days: end_index - start_index,
-      children: index >= points.length - 3 && scale === 'large' ? stageFormat(slice(dayline, start_index, end_index + 1), 'middle') : [],
+      children: /* index >= points.length - 3 && */scale === 'large' ? stageFormat(slice(dayline, start_index, end_index + 1), 'middle') : [],
     };
   }).filter(item => item);
 };
@@ -107,7 +107,7 @@ class TechStageService extends Service {
   async init() {
     // 获取所有股票代码
     // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000158' }, select: 'code' });
-    const stocks = await this.ctx.service.stock.index({ select: 'code' });
+    const stocks = await this.ctx.service.selectStock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {
       const stock = stocks[i];

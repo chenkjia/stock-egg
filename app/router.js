@@ -21,8 +21,10 @@ module.exports = app => {
   router.post('/tech/stageSign', controller.tech.stageSign);
   // 信号数据收集程序
   router.post('/tech/sign', controller.tech.sign);
-  // // 样本数据收集程序
+  // 样本数据收集程序
   router.post('/sample/start', controller.sample.start);
+  // 趋势判断样本数据收集程序
+  router.post('/sample/stage', controller.sample.stage);
   // // 样本数据的增删改查程序
   // router.resources('sample', '/sample', controller.sample);
   // 选择上升趋势的股票

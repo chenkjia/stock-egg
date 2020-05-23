@@ -11,6 +11,10 @@ class SampleController extends Controller {
     const { ctx, service } = this;
     ctx.body = await service.sample.start();
   }
+  async stage() {
+    const { ctx, service } = this;
+    ctx.body = await service.sampleStage.start();
+  }
 }
 
 module.exports = SampleController;
