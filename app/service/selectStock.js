@@ -1,5 +1,8 @@
 'use strict';
 const CustomService = require('./common');
+const {
+  isStageSign,
+} = require('./stage/common');
 
 class SelectStockService extends CustomService {
   constructor(x) {
@@ -36,41 +39,10 @@ class SelectStockService extends CustomService {
   * @return {SuccessCallback} 数据库执行结果
   */
   async SelectStockInitOfOneStock({ code }) {
-    const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code stage' });
-    const stages = stock.stage;
-    // 如果趋势小于2，则返回错误
-    if (stages.length < 2) {
-      return false;
-    }
-    // 定义当前大趋势与上一个大趋势,与当前中趋势
-    const currentStage = stages[stages.length - 1];
-    // 当前趋势的子趋势为3个
-    if (currentStage.children.length < 3) {
-      return false;
-    }
-    // 定义当前中趋势
-    const currentMiddleStage = currentStage.children[currentStage.children.length - 1];
-    // 当前趋势与当前子趋势都为rise
-    if (!(currentStage.type === 'rise' && currentMiddleStage.type === 'rise')) {
-      return false;
-    }
-    // 定义当上上个中趋势
-    const lastMiddleStage = currentStage.children[currentStage.children.length - 3];
-    // 当前趋势的结束价格大于上上个子趋势的结束价格
-    if (currentMiddleStage.end_price < lastMiddleStage.end_price) {
-      return false;
-    }
-    // 当前趋势的开始价格大于上上个子趋势的开始价格
-    if (currentMiddleStage.start_price < lastMiddleStage.start_price) {
-      return false;
-    }
-    // 上上个子趋势的结束价格大于上个大级别最后一个子趋势的开始价格
-    const lastStage = stages[stages.length - 2];
-    const lastLargeStageLastStage = lastStage.children[lastStage.children.length - 1];
-    if (lastMiddleStage.end_price < lastLargeStageLastStage.start_price) {
-      return false;
-    }
-    return true;
+    const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code stage tech dayline' });
+    const { stage, tech, dayline } = stock;
+
+    return isStageSign(stage, tech, dayline);
   }
 }
 module.exports = SelectStockService;

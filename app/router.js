@@ -9,16 +9,14 @@ module.exports = app => {
   router.post('/spider/start', controller.spider.start);
   // 启动爬虫程序
   router.post('/spider/dayline', controller.spider.dayline);
+  // 趋势计算程序
+  router.post('/stage/start', controller.stage.start);
   // 指标信息计算程序
   router.post('/tech/start', controller.tech.start);
   // 指标标识计算程序
   router.post('/tech/data', controller.tech.data);
   // 指标标识计算程序
   router.post('/tech/mark', controller.tech.mark);
-  // 趋势计算程序
-  router.post('/tech/stage', controller.tech.stage);
-  // 趋势计算程序
-  router.post('/tech/stageSign', controller.tech.stageSign);
   // 信号数据收集程序
   router.post('/tech/sign', controller.tech.sign);
   // 样本数据收集程序

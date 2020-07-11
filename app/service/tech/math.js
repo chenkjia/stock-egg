@@ -246,4 +246,5 @@ module.exports = {
   BOLL: boll,
   RSI: rsi,
   MA: ma,
+  EMA: ema,
 };

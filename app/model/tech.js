@@ -24,6 +24,12 @@ module.exports = {
     bias30: Number,
     bias60: Number,
   },
+  // ema系统
+  ema: {
+    ema4: Number,
+    ema5: Number,
+    ema6: Number,
+  },
   // macd系统
   macd: {
     diff: Number,

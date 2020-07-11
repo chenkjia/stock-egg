@@ -15,14 +15,6 @@ class TechController extends Controller {
     const { ctx, service } = this;
     ctx.body = await service.techData.init();
   }
-  async stage() {
-    const { ctx, service } = this;
-    ctx.body = await service.techStage.init();
-  }
-  async stageSign() {
-    const { ctx, service } = this;
-    ctx.body = await service.techStage.sign();
-  }
   async mark() {
     const { ctx, service } = this;
     ctx.body = await service.techMark.init();

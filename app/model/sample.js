@@ -8,6 +8,8 @@ module.exports = app => {
     sign_date: Date,
     // 止损价格
     stopLoss: Number,
+    // 止盈价格
+    stopSurplus: Number,
     // 买点价格
     buy_price: Number,
     // 买点日期

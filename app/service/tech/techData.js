@@ -1,6 +1,6 @@
 'use strict';
 const Service = require('egg').Service;
-const { KDJ } = require('./math');
+const { EMA, KDJ } = require('./math');
 const { macd } = require('ta-math');
 const { slice, round, sum, zipWith } = require('lodash');
 
@@ -74,20 +74,40 @@ const macdFormat = closeArray => {
     bar: round(bar, 3),
   }));
 };
+
+const emaCompute = (closeArray, days) => {
+  return closeArray.reduce((result, item, index) => {
+    const emaItem = index === 0 ? item : EMA(result[result.length - 1], item, days);
+    return [ ...result, emaItem ];
+  }, []);
+};
+const emaFormatter = closeArray => {
+  const ema4 = emaCompute(closeArray, 4);
+  const ema5 = emaCompute(closeArray, 5);
+  const ema6 = emaCompute(closeArray, 6);
+  return zipWith(ema4, ema5, ema6, (ema4, ema5, ema6) => ({
+    ema4: round(ema4, 3),
+    ema5: round(ema5, 3),
+    ema6: round(ema6, 3),
+  }));
+};
 const techFormat = dayline => {
   const techDayline = dayline.reverse();
-  const closeArray = techDayline.map(({ orgin }) => orgin.close);
-  const kdjArray = techDayline.map(({ orgin }) => ([ orgin.high, orgin.low, orgin.close ]));
-  const baseData = baseFormat(kdjArray);
+  const closeArray = techDayline.map(({ adj }) => adj.close);
+  // const kdjArray = techDayline.map(({ orgin }) => ([ orgin.high, orgin.low, orgin.close ]));
+  // const baseData = baseFormat(kdjArray);
   const maData = maFormatter(closeArray);
-  const macdData = macdFormat(closeArray);
-  const kdjData = kdjFormat(kdjArray);
-  const tech = zipWith(techDayline, baseData, maData, macdData, kdjData, ({ date }, base, ma, macd, kdj) => ({
+  const emaData = emaFormatter(closeArray);
+  // const macdData = macdFormat(closeArray);
+  // const kdjData = kdjFormat(kdjArray);
+  // const tech = zipWith(techDayline, baseData, maData, macdData, kdjData, ({ date }, base, ma, macd, kdj) => ({
+  const tech = zipWith(techDayline, maData, emaData, ({ date }, ma, ema) => ({
     date,
-    base,
+    // base,
     ma,
-    macd,
-    kdj,
+    ema,
+    // macd,
+    // kdj,
   }));
   return tech.reverse();
 };
@@ -99,7 +119,7 @@ class TechDataService extends Service {
   */
   async init() {
     // 获取所有股票代码
-    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000158' }, select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000001' }, select: 'code' });
     const stocks = await this.ctx.service.stock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {

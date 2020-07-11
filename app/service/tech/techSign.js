@@ -1,39 +1,57 @@
 'use strict';
 const Service = require('egg').Service;
-// const { slice, findLast } = require('lodash');
-const signFormat = (dayline, tech) => {
-  return tech.reduce((result, current) => {
-    if (result.stage === 'low') {
-      if (current.mark.includes('KDJGoldenCross')) {
-        return {
-          ...result,
-          sign: [ ...result.sign, {
-            date: current.date,
-            type: 'BUY',
-            name: 'KDJSecondGoldenCross',
-            system: 'KDJ',
-          }],
-        };
-      }
-      if (current.kdj.k > 20) {
-        return {
-          ...result,
-          stage: '',
-        };
-      }
+const { slice, findLast, maxBy } = require('lodash');
+// const signFormat = (dayline, tech) => {
+//   return tech.reduce((result, current) => {
+//     if (result.stage === 'low') {
+//       if (current.mark.includes('KDJGoldenCross')) {
+//         return {
+//           ...result,
+//           sign: [ ...result.sign, {
+//             date: current.date,
+//             type: 'BUY',
+//             name: 'KDJSecondGoldenCross',
+//             system: 'KDJ',
+//           }],
+//         };
+//       }
+//       if (current.kdj.k > 20) {
+//         return {
+//           ...result,
+//           stage: '',
+//         };
+//       }
+//       return result;
+//     }
+//     if (current.mark.includes('KDJLowGoldenCross')) {
+//       return {
+//         ...result,
+//         stage: 'low',
+//       };
+//     }
+//     return result;
+//   }, {
+//     stage: '',
+//     sign: [],
+//   });
+// };
+const signFormat = dayline => {
+  return dayline.reduce((result, current, index) => {
+    if (index < 50) {
       return result;
     }
-    if (current.mark.includes('KDJLowGoldenCross')) {
-      return {
-        ...result,
-        stage: 'low',
+    const m = maxBy(slice(dayline, 0, index), 'adj.high');
+    if (current.adj.high >= m.adj.high) {
+      return { sign: [ ...result.sign, {
+        date: current.date,
+        type: 'BUY',
+        name: 'NEWHIGH',
+        system: 'PRICE',
+      }],
       };
     }
     return result;
-  }, {
-    stage: '',
-    sign: [],
-  });
+  }, { sign: [] });
 };
 
 class TechSignService extends Service {
