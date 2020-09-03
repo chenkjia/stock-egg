@@ -11,24 +11,18 @@ module.exports = {
   },
   // 均线系统
   ma: {
-    ma5: Number,
-    ma10: Number,
     ma20: Number,
-    ma30: Number,
     ma60: Number,
     ma120: Number,
-    ma240: Number,
-    bias5: Number,
-    bias10: Number,
+    ema20: Number,
+    ema60: Number,
+    ema120: Number,
+    bma20: Number,
+    bma60: Number,
+    bma120: Number,
     bias20: Number,
-    bias30: Number,
     bias60: Number,
-  },
-  // ema系统
-  ema: {
-    ema4: Number,
-    ema5: Number,
-    ema6: Number,
+    bias120: Number,
   },
   // macd系统
   macd: {

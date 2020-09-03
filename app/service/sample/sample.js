@@ -1,72 +1,68 @@
 'use strict';
 const CustomService = require('../common');
-// const { findLastIndex, findIndex, min } = require('lodash');
-const { slice, maxBy } = require('lodash');
-
-const sampleFormat = ({ dayline, code }) => {
-  const NUM_PERCENT = 1.04;
-  const NUM_STOPLOSS = 0.92;
-  const NUM_DAYS = 750;
-  return dayline.reduce((result, current, index) => {
-    if (index < 50) {
-      return result;
-    }
-    if (result.type === 'EMPTY') {
-      const his = maxBy(slice(dayline, 0, index), 'adj.high');
-      const m = maxBy(slice(dayline, index - NUM_DAYS < 0 ? 0 : index - NUM_DAYS, index), 'adj.high');
-      if (current.adj.high >= m.adj.high && current.adj.high < his.adj.high && dayline[index + 1] && dayline[index + 1].adj.open < dayline[index].adj.close * NUM_PERCENT) {
-        return {
-          ...result,
-          type: 'BUY',
-          high: current.adj.high,
-        };
-      }
-      return result;
-    }
-    if (result.type === 'BUY') {
-      const stopLoss = result.high * NUM_STOPLOSS;
-      // 通过信号的位置往后找一位，以其开盘价为买入价，并记录买入时间
-      const buy_price = dayline[index].adj.open;
-      const buy_date = dayline[index].date;
-      return {
-        type: 'FULL',
-        sample: [ ...result.sample, {
-          code,
-          stopLoss,
-          buy_price,
-          buy_date,
-          days: 1,
-        }],
-      };
-    }
-    if (result.type === 'FULL') {
-      const currentSample = result.sample[result.sample.length - 1];
-      currentSample.days = currentSample.days + 1;
-      // 如果跌破止损价，则卖出
-      if (current.adj.low <= currentSample.stopLoss) {
-        currentSample.sell_price = currentSample.stopLoss;
-        if (current.adj.open <= currentSample.stopLoss) {
-          currentSample.sell_price = current.adj.open;
-        }
-        currentSample.sell_date = current.date;
-        currentSample.isSuccess = false;
-        currentSample.percent = (currentSample.sell_price - currentSample.buy_price) / currentSample.buy_price;
-        currentSample.isSuccess = currentSample.percent > 0;
-        return {
-          ...result,
-          type: 'EMPTY',
-          days: 0,
-        };
-      }
-      // 如果创新高，则以新高价乘以止损比例定义止损价
-      const currentStopLoss = current.adj.high * NUM_STOPLOSS;
-      if (currentSample.stopLoss < currentStopLoss) {
-        currentSample.stopLoss = currentStopLoss;
-      }
-      return result;
-    }
-  }, { type: 'EMPTY', sample: [] }).sample;
-};
+const { findLastIndex, findIndex, min } = require('lodash');
+// const { slice, maxBy } = require('lodash');
+// const sampleFormat = ({ dayline, code }) => {
+//   return dayline.reduce((result, current, index) => {
+//     if (index < 50) {
+//       return result;
+//     }
+//     if (result.type === 'EMPTY') {
+//       const his = maxBy(slice(dayline, 0, index), 'adj.high');
+//       const m = maxBy(slice(dayline, index - NUM_DAYS < 0 ? 0 : index - NUM_DAYS, index), 'adj.high');
+//       if (current.adj.high >= m.adj.high && current.adj.high < his.adj.high && dayline[index + 1] && dayline[index + 1].adj.open < dayline[index].adj.close * MAX_PERCENT && dayline[index + 1].adj.open > dayline[index].adj.close * MIN_PERCENT) {
+//         return {
+//           ...result,
+//           type: 'BUY',
+//           high: current.adj.high,
+//         };
+//       }
+//       return result;
+//     }
+//     if (result.type === 'BUY') {
+//       const stopLoss = result.high * NUM_STOPLOSS;
+//       // 通过信号的位置往后找一位，以其开盘价为买入价，并记录买入时间
+//       const buy_price = dayline[index].adj.open;
+//       const buy_date = dayline[index].date;
+//       return {
+//         type: 'FULL',
+//         sample: [ ...result.sample, {
+//           code,
+//           stopLoss,
+//           buy_price,
+//           buy_date,
+//           days: 1,
+//         }],
+//       };
+//     }
+//     if (result.type === 'FULL') {
+//       const currentSample = result.sample[result.sample.length - 1];
+//       currentSample.days = currentSample.days + 1;
+//       // 如果跌破止损价，则卖出
+//       if (current.adj.low <= currentSample.stopLoss) {
+//         currentSample.sell_price = currentSample.stopLoss;
+//         if (current.adj.open <= currentSample.stopLoss) {
+//           currentSample.sell_price = current.adj.open;
+//         }
+//         currentSample.sell_date = current.date;
+//         currentSample.isSuccess = false;
+//         currentSample.percent = (currentSample.sell_price - currentSample.buy_price) / currentSample.buy_price;
+//         currentSample.isSuccess = currentSample.percent > 0;
+//         return {
+//           ...result,
+//           type: 'EMPTY',
+//           days: 0,
+//         };
+//       }
+//       // 如果创新高，则以新高价乘以止损比例定义止损价
+//       const currentStopLoss = current.adj.high * NUM_STOPLOSS;
+//       if (currentSample.stopLoss < currentStopLoss) {
+//         currentSample.stopLoss = currentStopLoss;
+//       }
+//       return result;
+//     }
+//   }, { type: 'EMPTY', sample: [] }).sample;
+// };
 // const sampleFormat = ({ sign, dayline, code }) => {
 //   return sign.map(sign => {
 //     // 找出信号的位置
@@ -241,6 +237,38 @@ const sampleFormat = ({ dayline, code }) => {
 //   });
 // };
 
+const sampleFormat = ({ sign, dayline, code }) => {
+  const tmp = sign.reduce((result, item, index) => {
+    if (item.type === 'BUY') {
+      return [ ...result, { buy_sign: item.date }];
+    }
+    if (item.type === 'SELL') {
+      result[result.length - 1].sell_sign = item.date;
+      return result;
+    }
+  }, []);
+  return tmp.map(({ buy_sign, sell_sign }) => {
+    const buy_index = findIndex(dayline, [ 'date', buy_sign ]);
+    const sell_index = findIndex(dayline, [ 'date', sell_sign ]);
+    const buy_price = dayline[buy_index + 1] ? dayline[buy_index + 1].adj.open : null;
+    const buy_date = dayline[buy_index + 1] ? dayline[buy_index + 1].date : null;
+    const sell_price = dayline[sell_index + 1] ? dayline[sell_index + 1].adj.open : null;
+    const sell_date = dayline[sell_index + 1] ? dayline[sell_index + 1].date : null;
+    const days = sell_index - buy_index;
+    const isSuccess = sell_price > buy_price;
+    return {
+      code,
+      sign_date: sign.date,
+      buy_price,
+      buy_date,
+      sell_price,
+      sell_date,
+      isSuccess,
+      days,
+      percent: (sell_price - buy_price) / buy_price,
+    };
+  });
+};
 class SampleService extends CustomService {
   constructor(x) {
     super(x);
@@ -253,8 +281,8 @@ class SampleService extends CustomService {
   */
   async start() {
     // 获取所有股票代码
-    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000001' }, select: 'code' });
-    const stocks = await this.ctx.service.stock.index({ select: 'code' });
+    const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000027' }, select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ select: 'code' });
     // const stocks = await this.ctx.service.stock.index({ filter: { $where: 'this.dayline.length > 0' }, select: 'code' });
     // 循环执行每个股票的样本收集
     for (let i = 0; i < stocks.length; i++) {

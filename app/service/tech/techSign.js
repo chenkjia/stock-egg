@@ -1,6 +1,7 @@
 'use strict';
 const Service = require('egg').Service;
 const { slice, findLast, maxBy } = require('lodash');
+const { EMA } = require('./math');
 // const signFormat = (dayline, tech) => {
 //   return tech.reduce((result, current) => {
 //     if (result.stage === 'low') {
@@ -35,18 +36,43 @@ const { slice, findLast, maxBy } = require('lodash');
 //     sign: [],
 //   });
 // };
-const signFormat = dayline => {
-  return dayline.reduce((result, current, index) => {
+const emaCompute = (closeArray, days) => {
+  return closeArray.reduce((result, item, index) => {
+    const emaItem = index === 0 ? item : EMA(result[result.length - 1], item, days);
+    return [ ...result, emaItem ];
+  }, []);
+};
+const signFormat = (dayline, tech) => {
+  const barbiasL = tech.map(({ ma }) => ma.bias20 + ma.bias60 + ma.bias120);
+  const emaBarbiasL = emaCompute(barbiasL, 10);
+  return dayline.reduce((result, item, index) => {
     if (index < 50) {
       return result;
     }
-    const m = maxBy(slice(dayline, 0, index), 'adj.high');
-    if (current.adj.high >= m.adj.high) {
+    const current = tech[index].ma;
+    const last = tech[index].ma;
+    const con2 = item.adj.close > current.ema20;
+    const con3 = current.bma60 >= last.bma60;
+    const con4 = emaBarbiasL[index] < emaBarbiasL[index - 1];
+    const con5 = current.bias60 < last.bias60 && current.bma60 < last.bma60;
+    const shortCondition = con4 || con5;
+    const longCondition = con2 && con3 && !shortCondition;
+    const sign = result.sign;
+    if ((sign.length === 0 || sign[sign.length - 1].type === 'SELL') && longCondition) {
       return { sign: [ ...result.sign, {
-        date: current.date,
+        date: item.date,
         type: 'BUY',
-        name: 'NEWHIGH',
-        system: 'PRICE',
+        name: 'BUY',
+        system: 'MA',
+      }],
+      };
+    }
+    if (sign.length && sign[sign.length - 1].type === 'BUY' && shortCondition) {
+      return { sign: [ ...result.sign, {
+        date: item.date,
+        type: 'SELL',
+        name: 'SELL',
+        system: 'MA',
       }],
       };
     }
@@ -62,7 +88,7 @@ class TechSignService extends Service {
   */
   async init() {
     // 获取所有股票代码
-    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '000004' }, select: 'code' });
+    // const stocks = await this.ctx.service.stock.index({ filter: { symbol: '600030' }, select: 'code' });
     const stocks = await this.ctx.service.stock.index({ select: 'code' });
     // 循环执行每个股票的技术指标初始化
     for (let i = 0; i < stocks.length; i++) {

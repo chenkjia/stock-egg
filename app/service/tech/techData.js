@@ -9,28 +9,36 @@ const maCompute = (dayline, index, num) => {
   const list = slice(dayline, index - num + 1, index + 1);
   return round(sum(list, 'close') / num, 3);
 };
+const emaCompute = (closeArray, days) => {
+  return closeArray.reduce((result, item, index) => {
+    const emaItem = index === 0 ? item : EMA(result[result.length - 1], item, days);
+    return [ ...result, emaItem ];
+  }, []);
+};
 const maFormatter = dayline => {
+  const ema20Array = emaCompute(dayline, 20);
+  const ema60Array = emaCompute(dayline, 60);
+  const ema120Array = emaCompute(dayline, 120);
   return dayline.map((item, index) => {
-    const ma5 = maCompute(dayline, index, 5);
-    const ma10 = maCompute(dayline, index, 10);
     const ma20 = maCompute(dayline, index, 20);
-    const ma30 = maCompute(dayline, index, 30);
     const ma60 = maCompute(dayline, index, 60);
     const ma120 = maCompute(dayline, index, 120);
-    const ma240 = maCompute(dayline, index, 240);
+    const ema20 = round(ema20Array[index], 3);
+    const ema60 = round(ema60Array[index], 3);
+    const ema120 = round(ema120Array[index], 3);
     return {
-      ma5,
-      ma10,
       ma20,
-      ma30,
       ma60,
       ma120,
-      ma240,
-      bias5: round((item - ma5) / ma5 * 100, 3),
-      bias10: round((item - ma10) / ma10 * 100, 3),
-      bias20: round((item - ma20) / ma20 * 100, 3),
-      bias30: round((item - ma30) / ma30 * 100, 3),
-      bias60: round((item - ma60) / ma60 * 100, 3),
+      ema20,
+      ema60,
+      ema120,
+      bma20: ema20 - ma20,
+      bma60: ema60 - ma60,
+      bma120: ema120 - ma120,
+      bias20: ma20 ? round((item - ma20) / ma20 * 100, 3) : null,
+      bias60: ma60 ? round((ma60 - ma20) / ma60 * 100, 3) : null,
+      bias120: ma120 ? round((ma120 - ma60) / ma120 * 100, 3) : null,
     };
   });
 };
@@ -75,37 +83,20 @@ const macdFormat = closeArray => {
   }));
 };
 
-const emaCompute = (closeArray, days) => {
-  return closeArray.reduce((result, item, index) => {
-    const emaItem = index === 0 ? item : EMA(result[result.length - 1], item, days);
-    return [ ...result, emaItem ];
-  }, []);
-};
-const emaFormatter = closeArray => {
-  const ema4 = emaCompute(closeArray, 4);
-  const ema5 = emaCompute(closeArray, 5);
-  const ema6 = emaCompute(closeArray, 6);
-  return zipWith(ema4, ema5, ema6, (ema4, ema5, ema6) => ({
-    ema4: round(ema4, 3),
-    ema5: round(ema5, 3),
-    ema6: round(ema6, 3),
-  }));
-};
 const techFormat = dayline => {
   const techDayline = dayline.reverse();
   const closeArray = techDayline.map(({ adj }) => adj.close);
   // const kdjArray = techDayline.map(({ orgin }) => ([ orgin.high, orgin.low, orgin.close ]));
   // const baseData = baseFormat(kdjArray);
   const maData = maFormatter(closeArray);
-  const emaData = emaFormatter(closeArray);
   // const macdData = macdFormat(closeArray);
   // const kdjData = kdjFormat(kdjArray);
   // const tech = zipWith(techDayline, baseData, maData, macdData, kdjData, ({ date }, base, ma, macd, kdj) => ({
-  const tech = zipWith(techDayline, maData, emaData, ({ date }, ma, ema) => ({
+  const tech = zipWith(techDayline, maData, ({ date }, ma) => ({
     date,
     // base,
     ma,
-    ema,
+    // ema,
     // macd,
     // kdj,
   }));

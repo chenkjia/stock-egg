@@ -103,6 +103,9 @@ class DaylineService extends Service {
   }
   async daylineOfOneStockInit({ code }) {
     const stock = await this.ctx.service.stock.show({ filter: { code }, select: 'code dayline' });
+    if (stock.dayline.length) {
+      return code;
+    }
     const start = stock.dayline.length ? moment(stock.dayline[0].date).add(1, 'day').format('YYYYMMDD') : undefined;
     const data = await Promise.all([
       this.getDataOfOneStockRecursive(stock, 'daily', start),
